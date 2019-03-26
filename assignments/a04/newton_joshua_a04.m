@@ -29,10 +29,12 @@ function [predictedFrame, errorFrame] = ...
     maxHeight = frameHeight-(blockSize-1);
     maxWidth = frameWidth-(blockSize-1);
     windowSize = (searchRange-1)/2;
+    vBlocks = frameHeight/blockSize;
+    hBlocks = frameWidth/blockSize;
     
     % Preallocating arrays for displacement vectors, predicted frame
-    displacementV = zeros(25,32);
-    displacementH = zeros(25,32);
+    displacementV = zeros(vBlocks,hBlocks);
+    displacementH = zeros(vBlocks,hBlocks);
     predictedFrame = zeros(frameHeight,frameWidth);
     
     
