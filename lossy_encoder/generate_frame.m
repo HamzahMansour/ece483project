@@ -1,4 +1,4 @@
-function output_img = generate_coefficients(quantized_coeff, qf)       
+function output_img = generate_frame(quantized_coeff, qf)       
     %% Stage 1: Dequantization of coefficients
     % Generate JPEG quantization matrix
     m = [16 11 10 16 24 40 51 61       
