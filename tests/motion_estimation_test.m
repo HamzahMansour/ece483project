@@ -8,10 +8,12 @@ function motion_estimation_test
     addpath(strcat(parentDir,'\lossy_encoder'));
     
     % Choose anchor/current image, check validity
-    [fileA,pathA] = uigetfile('*.tif');
+    [fileA,pathA] = uigetfile({'*.tif';'*.png';'*.jpg';'*.jpeg';'*.*'}, ...
+                              'Select Anchor Frame');
     if ~isequal(fileA,0)
         % Choose target/reference image, check validity
-        [fileT,pathT] = uigetfile('*.tif');
+        [fileT,pathT] = uigetfile({'*.tif';'*.png';'*.jpg';'*.jpeg'; ...
+                                   '*.*'}, 'Select Target Frame');
         if ~isequal(fileT,0)
             % Load test frames into MATLAB
             anchorFrame = imread(strcat(pathA,fileA));

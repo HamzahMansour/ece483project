@@ -11,7 +11,8 @@ function img_to_coeff_to_img_test
     qf = 5;
     
     % Choose image, check validity
-    [file,path] = uigetfile('*.tif');
+    [file,path] = uigetfile({'*.tif';'*.png';'*.jpg';'*.jpeg';'*.*'}, ...
+                              'Select Input Image');
     if ~isequal(file,0)
         % Read image as MATLAB double array
         input_img = double(imread(strcat(path,file)));
