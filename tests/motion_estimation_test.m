@@ -20,10 +20,12 @@ function motion_estimation_test
             targetFrame = imread(strcat(pathT,fileT));
 
             % Execute motion estimation algorithm
-            [errorFrame, displacementV, displacementH] = ...
+            [predictedFrame, displacementV, displacementH] = ...
             motion_estimation(double(targetFrame), double(anchorFrame));
         end
     end
+    % Calculate difference frame for encoding
+    errorFrame = anchorFrame - predictedFrame;
     
     % Display error image (complemented for visual inspection purposes)
     imshow(imcomplement(uint8(errorFrame)));

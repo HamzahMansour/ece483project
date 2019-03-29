@@ -1,4 +1,4 @@
-function [errorFrame, displacementV, displacementH] = motion_estimation ...
+function [predictedFrame, displacementV, displacementH] = motion_estimation ...
     (targetFrame, anchorFrame, searchRange, mbSize, BMA)
     % Input arguments:
     %   - targetFrame: Stored previous frame. This frame will be searched for
@@ -76,9 +76,6 @@ function [errorFrame, displacementV, displacementH] = motion_estimation ...
             end
         end
     end
-    
-    % Calculate difference frame for encoding
-    errorFrame = anchorFrame - predictedFrame;
 end
 
 
