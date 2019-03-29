@@ -26,4 +26,4 @@ function output_img = generate_coefficients(quantized_coeff, qf)
     fun = @(block_struct) idct2(block_struct.data) + 128;
     reconstructed_img = blockproc(partial_coeff,[8,8],fun);
     
-    output_img = uint8(reconstructed_img); % Convert for display
+    output_img = reconstructed_img;
