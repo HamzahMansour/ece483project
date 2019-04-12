@@ -16,17 +16,27 @@ function motion_estimation_test
                                    '*.*'}, 'Select Target Frame');
         if ~isequal(fileT,0)
             % Load test frames into MATLAB
-            anchorFrame = imread(strcat(pathA,fileA));
-            targetFrame = imread(strcat(pathT,fileT));
-
+            anchorFrame = double(imread(strcat(pathA,fileA)));
+            targetFrame = double(imread(strcat(pathT,fileT)));
+            
             % Execute motion estimation algorithm
-            [predictedFrame, displacementV, displacementH] = ...
-            motion_estimation(double(targetFrame), double(anchorFrame));
+            predictedFrames = cell(1,3);
+            displacementV = cell(1,3);
+            displacementH = cell(1,3);
+            errorFrames = cell(1,3);
+            
+            % Predict frame for each BMA type
+            for i = 1:3
+                [predictedFrames{i}, displacementV, displacementH] = ...
+                motion_estimation(targetFrame, anchorFrame, i);
+            
+                % Calculate difference frame for encoding
+                errorFrame{i} = anchorFrame - predictedFrames{i};
+
+                % Display error image (complemented for visual inspection)
+                figure(i);
+                imshow(imcomplement(uint8(errorFrame{i})));
+            end
         end
     end
-    % Calculate difference frame for encoding
-    errorFrame = anchorFrame - predictedFrame;
-    
-    % Display error image (complemented for visual inspection purposes)
-    imshow(imcomplement(uint8(errorFrame)));
 end
