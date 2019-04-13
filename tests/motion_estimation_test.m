@@ -27,15 +27,15 @@ function motion_estimation_test
             
             % Predict frame for each BMA type
             for i = 1:3
-                [predictedFrames{i}, displacementV, displacementH] = ...
+                [predictedFrames{i}, displacementV{i}, displacementH{i}] = ...
                 motion_estimation(targetFrame, anchorFrame, i);
             
                 % Calculate difference frame for encoding
-                errorFrame{i} = anchorFrame - predictedFrames{i};
+                errorFrames{i} = anchorFrame - predictedFrames{i};
 
                 % Display error image (complemented for visual inspection)
                 figure(i);
-                imshow(imcomplement(uint8(errorFrame{i})));
+                imshow(imcomplement(uint8(errorFrames{i})));
             end
         end
     end

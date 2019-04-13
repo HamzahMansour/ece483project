@@ -13,11 +13,6 @@ function [predictedFrame, displacementV, displacementH] = motion_estimation ...
     %   - displacementV: Vertical component of displacement vectors.
     %   - displacementH: Horizontal component of displacement vectors.
 
-    % Setting a default values for parameters if not supplied
-    if (~exist('BMA', 'var'))
-        BMA = 1;
-    end
-
     % Precalculate frame and block properties
     mbSize = 16;
     [frameHeight,frameWidth] = size(anchorFrame);
@@ -79,6 +74,10 @@ function [predictedBlock, displacementV, displacementH] = EBMA ...
     %   - anchorBlock: Block which must be matched.
     %   - pAnchorV: Pointer indicating vertical index of anchorBlock.
     %   - pAnchorH: Pointer indicating horizontal index of anchorBlock.
+    %   - S: Parameter controlling search window size.    
+    %   - mbSize: Size of macroblock. 
+    %   - maxHeight: Boundary to ensure comparison is within image bounds.
+    %   - maxWidth: Boundary to ensure comparison is within image bounds. 
     %
     % Output arguments:
     %   - predictedBlock: Best match for anchorBlock found in targetFrame.
@@ -127,6 +126,10 @@ function [predictedBlock, displacementV, displacementH] = TSS ...
     %   - anchorBlock: Block which must be matched.
     %   - pAnchorV: Pointer indicating vertical index of anchorBlock.
     %   - pAnchorH: Pointer indicating horizontal index of anchorBlock.
+    %   - S: Parameter controlling search window size.    
+    %   - mbSize: Size of macroblock. 
+    %   - maxHeight: Boundary to ensure comparison is within image bounds.
+    %   - maxWidth: Boundary to ensure comparison is within image bounds. 
     %   
     % Output arguments:
     %   - predictedBlock: Best match for anchorBlock found in targetFrame.
@@ -140,20 +143,22 @@ function [predictedBlock, displacementV, displacementH] = TSS ...
     differenceBlock = targetBlock - anchorBlock;
     lowestError = sum(abs(differenceBlock),'all');      
     predictedBlock = targetBlock;
-    displacementV = pAnchorV;
-    displacementH = pAnchorH;
+    pSearchV = pAnchorV;
+    pSearchH = pAnchorH;
+    displacementV = 0;
+    displacementH = 0;
     
     % List of neighbour coordinates to search through 
-    search = [ 1  1;  1  0;  1 -1; ...
-               0  1;         0 -1;  ...
-              -1  1; -1  0; -1 -1];
+    search = [-1 -1; -1  0; -1  1; ...
+               0 -1;         0  1;  ...
+               1 -1;  1  0;  1  1];
           
     while S > 1
         S = round(S/2);  % Halve step size
         for i = 1:8
             % Update target pointer with location of one of 8 neighbours
-            pTargetV = pAnchorV + S*search(i,1);
-            pTargetH = pAnchorH + S*search(i,2);
+            pTargetV = pSearchV + S*search(i,1);
+            pTargetH = pSearchH + S*search(i,2);
             
             % Ensuring target frame pointers are within image boundary
             if (pTargetV >= 1 && pTargetV <= maxHeight && ...
@@ -180,8 +185,8 @@ function [predictedBlock, displacementV, displacementH] = TSS ...
             end
         end  
         % Update center location for next step
-        pAnchorV = displacementV;
-        pAnchorH = displacementH;
+        pSearchV = pAnchorV + displacementV;
+        pSearchH = pAnchorH + displacementH;
     end
 end
 
@@ -193,6 +198,10 @@ function [predictedBlock, displacementV, displacementH] = TDLS ...
     %   - anchorBlock: Block which must be matched.
     %   - pAnchorV: Pointer indicating vertical index of anchorBlock.
     %   - pAnchorH: Pointer indicating horizontal index of anchorBlock.
+    %   - S: Parameter controlling search window size.    
+    %   - mbSize: Size of macroblock. 
+    %   - maxHeight: Boundary to ensure comparison is within image bounds.
+    %   - maxWidth: Boundary to ensure comparison is within image bounds. 
     %   
     % Output arguments:
     %   - predictedBlock: Best match for anchorBlock found in targetFrame.
@@ -206,19 +215,35 @@ function [predictedBlock, displacementV, displacementH] = TDLS ...
     differenceBlock = targetBlock - anchorBlock;
     lowestError = sum(abs(differenceBlock),'all');      
     predictedBlock = targetBlock;
-    displacementV = pAnchorV;
-    displacementH = pAnchorH;
+    pSearchV = pAnchorV;
+    pSearchH = pAnchorH;
+    displacementV = 0;
+    displacementH = 0;
+    changeFlag = 0;
     
     % List of neighbour coordinates to search through 
-    search = [        1  0;         ...
-               0  1;         0 -1;  ...
-                     -1  0;      ];
-          
+    search = [       -1  0;         ...
+               0 -1;         0  1;  ...
+                      1  0;      ];
+    
     while S > 1
+        if (changeFlag == 0)
+            % Halve step size if best location did not change
+            S = round(S/2);  
+        else
+            % Update location for next step if better match found
+            pSearchV = pAnchorV + displacementV;
+            pSearchH = pAnchorH + displacementH;
+        end
+        
+        % Reset flag to track whether search location has changed
+        changeFlag = 0;
+        
+        % Search through neighbour coordinates
         for i = 1:4
             % Update target pointer with location of one of 4 neighbours
-            pTargetV = pAnchorV + S*search(i,1);
-            pTargetH = pAnchorH + S*search(i,2);
+            pTargetV = pSearchV + S*search(i,1);
+            pTargetH = pSearchH + S*search(i,2);
             
             % Ensuring target frame pointers are within image boundary
             if (pTargetV >= 1 && pTargetV <= maxHeight && ...
@@ -234,6 +259,9 @@ function [predictedBlock, displacementV, displacementH] = TDLS ...
                 
                 % Check to see if lowest error in search window
                 if errorTerm < lowestError
+                    % Flag to track if lower error found in neighbour
+                    changeFlag = 1;
+                    
                     % Updating error condition value
                     lowestError = errorTerm;
 
@@ -244,14 +272,6 @@ function [predictedBlock, displacementV, displacementH] = TDLS ...
                 end
             end
         end  
-        if (pAnchorV == displacementV)
-            % Halve step size if best location did not change
-            S = round(S/2);  
-        else
-            % Update location for next step
-            pAnchorV = displacementV;
-            pAnchorH = displacementH;
-        end
     end 
 end
 
